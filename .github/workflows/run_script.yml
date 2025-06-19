@@ -1,45 +1,36 @@
-# ชื่อของ Workflow ที่จะแสดงในหน้า Actions
 name: Send LINE Notification
 
-# กำหนดว่าจะให้ Workflow นี้ทำงานเมื่อไหร่
 on:
-  # 1. ทำให้เราสามารถกดปุ่ม "Run workflow" เพื่อทดสอบได้เอง
   workflow_dispatch:
-
-  # 2. ตั้งเวลาให้ทำงานอัตโนมัติ
-  # รูปแบบคือ: นาที ชั่วโมง วัน เดือน วันของสัปดาห์
-  # '0 * * * *' หมายถึง ทำงานทุกๆ ชั่วโมงเต็ม (เช่น 9:00, 10:00, 11:00)
   schedule:
     - cron: '0 * * * *'
 
-# รายการของ "งาน" ที่จะให้ทำ
 jobs:
-  # ชื่องาน (ตั้งอะไรก็ได้)
   build:
-    # สั่งให้ไปทำงานบนเครื่องคอมพิวเตอร์เสมือนระบบ Ubuntu เวอร์ชันล่าสุด
     runs-on: ubuntu-latest
-
-    # ขั้นตอนการทำงาน (ทำจากบนลงล่าง)
     steps:
-      # 1. ดาวน์โหลดโค้ดของเราจาก Repository ลงมาที่เครื่อง
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. ติดตั้งโปรแกรม Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10' # สามารถเปลี่ยนเวอร์ชันได้
+          python-version: '3.10'
 
-      # 3. ติดตั้งไลบรารีที่จำเป็นจากไฟล์ requirements.txt
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # 4. สั่งรันสคริปต์หลักของเรา!
       - name: Run Python script
-        # กำหนดให้ส่ง "ความลับ" ที่เราเก็บไว้เข้าไปในโปรแกรม
         env:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
-        # คำสั่งสำหรับรัน
         run: python main.py
+      
+      # --- ส่วนที่เพิ่มเข้ามา ---
+      # ขั้นตอนสำหรับบันทึกการเปลี่ยนแปลงของไฟล์ last_value.txt กลับเข้า repository
+      - name: Commit and push if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "BOT: Update last discharge value"
+          # ระบุให้สนใจแค่ไฟล์นี้เท่านั้น
+          file_pattern: last_value.txt
